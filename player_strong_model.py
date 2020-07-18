@@ -1,3 +1,4 @@
+from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -5,23 +6,23 @@ import matplotlib.pylab as plt
 import pystan
 
 cols = [
-    'tourney_id', # Id of Tournament
-    'tourney_name', # Name of the Tournament
-    'surface', # Surface of the Court (Hard, Clay, Grass)
-    'draw_size', # Number of people in the tournament
-    'tourney_level', # Level of the tournament (A=ATP Tour, D=Davis Cup, G=Grand Slam, M=Masters)
-    'tourney_date', # Start date of tournament
-    'match_num', # Match number
-    'winner_id', # Id of winner
-    'winner_seed', # Seed of winner
-    'winner_entry', # How the winner entered the tournament
-    'winner_name', # Name of winner
-    'winner_hand', # Dominant hand of winner (L=Left, R=Right, U=Unknown?)
-    'winner_ht', # Height in cm of winner
-    'winner_ioc', # Country of winner
-    'winner_age', # Age of winner
-    'winner_rank', # Rank of winner
-    'winner_rank_points', # Rank points of winner
+    'tourney_id',  # Id of Tournament
+    'tourney_name',  # Name of the Tournament
+    'surface',  # Surface of the Court (Hard, Clay, Grass)
+    'draw_size',  # Number of people in the tournament
+    'tourney_level',  # Level of the tournament (A=ATP Tour, D=Davis Cup, G=Grand Slam, M=Masters)
+    'tourney_date',  # Start date of tournament
+    'match_num',  # Match number
+    'winner_id',  # Id of winner
+    'winner_seed',  # Seed of winner
+    'winner_entry',  # How the winner entered the tournament
+    'winner_name',  # Name of winner
+    'winner_hand',  # Dominant hand of winner (L=Left, R=Right, U=Unknown?)
+    'winner_ht',  # Height in cm of winner
+    'winner_ioc',  # Country of winner
+    'winner_age',  # Age of winner
+    'winner_rank',  # Rank of winner
+    'winner_rank_points',  # Rank points of winner
     'loser_id',
     'loser_seed',
     'loser_entry',
@@ -32,19 +33,19 @@ cols = [
     'loser_age',
     'loser_rank',
     'loser_rank_points',
-    'score', # Score
-    'best_of', # Best of X number of sets
-    'round', # Round
-    'minutes', # Match length in minutes
-    'w_ace', # Number of aces for winner
-    'w_df', # Number of double faults for winner
-    'w_svpt', # Number of service points played by winner
-    'w_1stIn', # Number of first serves in for winner
-    'w_1stWon', # Number of first serve points won for winner
-    'w_2ndWon', # Number of second serve points won for winner
-    'w_SvGms', # Number of service games played by winner
-    'w_bpSaved', # Number of break points saved by winner
-    'w_bpFaced', # Number of break points faced by winner
+    'score',  # Score
+    'best_of',  # Best of X number of sets
+    'round',  # Round
+    'minutes',  # Match length in minutes
+    'w_ace',  # Number of aces for winner
+    'w_df',  # Number of double faults for winner
+    'w_svpt',  # Number of service points played by winner
+    'w_1stIn',  # Number of first serves in for winner
+    'w_1stWon',  # Number of first serve points won for winner
+    'w_2ndWon',  # Number of second serve points won for winner
+    'w_SvGms',  # Number of service games played by winner
+    'w_bpSaved',  # Number of break points saved by winner
+    'w_bpFaced',  # Number of break points faced by winner
     'l_ace',
     'l_df',
     'l_svpt',
@@ -78,7 +79,7 @@ df_matches = pd.concat([
 ])
 df_matches = df_matches.dropna(subset=['tourney_date'])
 df_matches['year'] = df_matches['tourney_date'].apply(lambda x: int(str(x)[0:4]))
-# display(df_matches.head())
+display(df_matches.head())
 print(len(df_matches))
 
 
@@ -155,7 +156,7 @@ for player_a in arr_target_player:
             (df_matches['year'] >= 2015) &
             (df_matches['winner_name'] == player_a) &
             (df_matches['loser_name'] == player_b)
-            ]
+        ]
 
         for _ in range(len(df_tmp)):
             LW.append([dic_target_player[player_b], dic_target_player[player_a]])
@@ -164,7 +165,7 @@ for player_a in arr_target_player:
             (df_matches['year'] >= 2015) &
             (df_matches['winner_name'] == player_b) &
             (df_matches['loser_name'] == player_a)
-            ]
+        ]
 
         for _ in range(len(df_tmp)):
             LW.append([dic_target_player[player_a], dic_target_player[player_b]])
@@ -172,28 +173,28 @@ for player_a in arr_target_player:
 LW = np.array(LW, dtype=np.int32)
 print(LW)
 
-model = """
-    data {
-        int N;
-        int G;
-        int<lower=1, upper=N> LW[G, 2];
-    }
-    parameters {
-        ordered[2] performance[G];
-        vector<lower=0>[N] mu;
-        real<lower=0> s_mu; 
-        vector<lower=0>[N] s_pf;
-    }
-    model {
-        for (g in 1:G)
-            for (i in 1:2)
-                performance[g, i] ~ normal(mu[LW[g, i]], s_pf[LW[g, i]]);
+model = data {
+    int N
+    int G
+    int < lower = 1, upper = N > LW[G, 2]
+}
+parameters {
+    ordered[2] performance[G]
+    vector < lower = 0 > [N] mu
+    real < lower = 0 > s_mu
+    vector < lower = 0 > [N] s_pf
+}
+model {
+    for (g in 1: G)
+    for (i in 1: 2)
+    performance[g, i] ~ normal(mu[LW[g, i]], s_pf[LW[g, i]])
 
-        mu ~ normal(0, s_mu);
-        s_pf ~ gamma(10, 10);
-    }
-"""
-fit1 = pystan.stan(model_code=model, data={'N': len(dic_target_player), 'G': len(LW), 'LW': LW}, iter=1000, chains=4)
+    mu ~ normal(0, s_mu)
+    s_pf ~ gamma(10, 10)
+}
+
+fit1 = pystan.stan(model_code=model, data={'N': len(
+    dic_target_player), 'G': len(LW), 'LW': LW}, iter=1000, chains=4)
 la1 = fit1.extract()
 print(fit1)
 
@@ -246,7 +247,8 @@ cmap = matplotlib.cm.get_cmap('tab10')
 
 for i, player in enumerate(arr_target_player):
 
-    g = plt.violinplot(la1['mu'][:, i], positions=[i], showmeans=False, showextrema=True, showmedians=True)
+    g = plt.violinplot(la1['mu'][:, i], positions=[i], showmeans=False,
+                       showextrema=True, showmedians=True)
     c = cmap(i % 10)
 
     for pc in g['bodies']:
@@ -265,8 +267,6 @@ plt.ylabel('latent strength')
 plt.show()
 
 # カラーマップの作成コード
-
-from matplotlib.colors import LinearSegmentedColormap
 
 
 def generate_cmap(colors):
@@ -306,21 +306,21 @@ df_tmp = df_matches[
     (df_matches['year'] >= 2015) &
     (df_matches['winner_name'].isin(arr_target_player)) &
     (df_matches['loser_name'].isin(arr_target_player))
-    ]
+]
 
 summary = np.zeros((len(arr_target_player), len(arr_target_player)), dtype=np.int32)
 
 for i in range(len(arr_target_player)):
     for j in range(i + 1, len(arr_target_player)):
         summary[i, j] = len(df_tmp[
-                                (df_tmp['winner_name'] == arr_target_player[i]) &
-                                (df_tmp['loser_name'] == arr_target_player[j])
-                                ])
+            (df_tmp['winner_name'] == arr_target_player[i]) &
+            (df_tmp['loser_name'] == arr_target_player[j])
+        ])
 
         summary[j, i] = len(df_tmp[
-                                (df_tmp['loser_name'] == arr_target_player[i]) &
-                                (df_tmp['winner_name'] == arr_target_player[j])
-                                ])
+            (df_tmp['loser_name'] == arr_target_player[i]) &
+            (df_tmp['winner_name'] == arr_target_player[j])
+        ])
 
 fig, axs = plt.subplots(figsize=(9, 9))
 im = axs.imshow(summary, cmap=cm, interpolation='nearest')
@@ -350,7 +350,8 @@ cmap = matplotlib.cm.get_cmap('tab10')
 
 for i, player in enumerate(arr_target_player):
 
-    g = plt.violinplot(la1['s_pf'][:, i], positions=[i], showmeans=False, showextrema=True, showmedians=True)
+    g = plt.violinplot(la1['s_pf'][:, i], positions=[i], showmeans=False,
+                       showextrema=True, showmedians=True)
     c = cmap(i % 10)
 
     for pc in g['bodies']:
